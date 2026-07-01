@@ -16,6 +16,7 @@ const CATEGORIES = [
   { key: "av",           label: "Adaptateurs audio/vidéo",    icon: "🔌" },
   { key: "dock",         label: "Stations d'accueil",        icon: "🖥️" },
   { key: "refroidissement", label: "Refroidissement PC",     icon: "🌀" },
+  { key: "gonflables",   label: "Mobilier gonflable",        icon: "🛋️" },
   { key: "domotique",    label: "Maison connectée",          icon: "🏠" },
 ];
 
@@ -109,6 +110,15 @@ const PRODUCTS = [
 
   // ---------- Refroidissement PC ----------
   { id:"refroidissement-turbo", nom:"Système de refroidissement Turbo (6 ventilateurs)", categorie:"refroidissement", specs:"10 modes d'éclairage RGB · vitesse réglable · 6 niveaux de puissance", prix:22500, stock:"in", port:"USB", img:driveImg("1A_7Ilsko3nJIbCQccT0viQjICNqyLfbD") },
+
+  // ---------- Mobilier gonflable ----------
+  { id:"matelas-gonflable-25cm", nom:"Matelas gonflable (25cm)", categorie:"gonflables", specs:"1 place à 12 000 FCFA · 2 places à 17 000 FCFA", prix:12000, stock:"in", port:"1-2 PLACES", img:driveImg("1IKUyXaoTGdhJ6_EVY5w52FO2KBSGk3UW") },
+  { id:"matelas-gonflable-40cm", nom:"Matelas gonflable premium (40cm)", categorie:"gonflables", specs:"Pompe automatique incluse · 1 place à 23 500 FCFA · 2 places à 28 500 FCFA", prix:23500, stock:"in", port:"1-2 PLACES", img:driveImg("1GvtoCBgM5Oos2X3ecf069xasmy7LEuVH") },
+  { id:"canape-gonflable", nom:"Canapé gonflable", categorie:"gonflables", specs:"Plusieurs coloris disponibles · avec repose-pieds", prix:10000, stock:"in", port:"1 PLACE", img:driveImg("1KDlZNkR_tLM8nuTSVW2K0WgDaxF-bvHC") },
+  { id:"nouveau-canape-gonflable", nom:"Nouveau canapé gonflable", categorie:"gonflables", specs:"Modèle bicolore avec accoudoirs et repose-tête", prix:11500, stock:"in", port:"1 PLACE", img:driveImg("1UrcYZaiFeKstxkifki0G0wR03uyJlx7_") },
+  { id:"chaise-gonflable", nom:"Chaise gonflable", categorie:"gonflables", specs:"Plusieurs coloris disponibles", prix:7000, stock:"in", port:"1 PLACE", img:driveImg("1dtN2rAIFmpPpia8kmZqLicc1f8IVueU6") },
+  { id:"chaise-gonflable-bicolore", nom:"Chaise gonflable bicolore", categorie:"gonflables", specs:"Design bicolore, plusieurs coloris disponibles", prix:11500, stock:"in", port:"1 PLACE", img:driveImg("17e99ObLTVsT2PpLM4hma_n_VMCgks1JW") },
+  { id:"salon-gonflable-haut-gamme", nom:"Salon gonflable haut de gamme", categorie:"gonflables", specs:"Ensemble salon complet · 1 place à 17 500 FCFA · 2 places à 21 000 FCFA", prix:17500, stock:"in", port:"SALON", img:driveImg("1BQZY2UlE96CitpIqjCXjhoNh7XQLpNYz") },
 
   // ---------- Maison connectée ----------
   { id:"prise-connectee", nom:"Prise connectée Wi-Fi", categorie:"domotique", specs:"Contrôle via app · compatible assistants vocaux", prix:0, stock:"in", port:"2.4GHZ" },
