@@ -581,10 +581,20 @@ footer.site .bottom{
   /* Catalogue : on garde 2 colonnes de produits comme sur desktop */
   .cat-hero h1{ font-size:28px; }
   .filters{
-    top:64px; gap:6px;
-    flex-wrap:wrap;
+    top:64px;
+    display:grid;
+    grid-auto-flow:column;
+    grid-template-rows:repeat(3, auto);
+    gap:6px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding-left:24px; padding-right:24px;
+    margin:0 -24px;
+    width:calc(100% + 48px);
   }
-  .filter-btn{ font-size:12.5px; padding:7px 11px; }
+  .filters::-webkit-scrollbar{ display:none; }
+  .filter-btn{ font-size:12.5px; padding:7px 11px; white-space:nowrap; }
   .search-row input{ font-size:16px; padding:13px 16px; }
   .result-count{ font-size:13px; }
 
