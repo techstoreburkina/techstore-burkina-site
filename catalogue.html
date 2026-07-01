@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catalogue — TechStore Burkina</title>
+<meta name="description" content="Catalogue complet TechStore Burkina : PC portables gaming, caméras Wi-Fi, périphériques, stockage, dongles, adaptateurs et accessoires.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div class="statusbar">
+  <div class="wrap">
+    <div class="seg"><span class="dot"></span>EN LIGNE — Karpala, Ouagadougou</div>
+    <div class="seg">Lun–Sam · 8h–19h <span class="sep">|</span> <a href="https://wa.me/22676963696" target="_blank" rel="noopener">+226 76 96 36 96</a></div>
+  </div>
+</div>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="index.html">
+      <span class="mark">TS</span>
+      TechStore <small>BURKINA</small>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Ouvrir le menu"><span></span></button>
+    <nav class="main" id="main-nav">
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="catalogue.html" class="active">Catalogue</a></li>
+        <li><a href="index.html#pourquoi">Pourquoi nous</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+        <li><a class="btn-wa-nav" href="https://wa.me/22676963696" target="_blank" rel="noopener">💬 WhatsApp</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="cat-hero">
+    <div class="wrap">
+      <h1>Catalogue</h1>
+      <p>Prix affichés à titre indicatif quand disponibles. Pour la disponibilité exacte et le prix à jour, commande directement sur WhatsApp.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="wrap">
+      <div class="filters" id="filters"><!-- généré par script.js --></div>
+      <div class="search-row">
+        <input type="text" id="search-input" placeholder="Rechercher un produit (ex : RTX, caméra, dongle...)">
+        <span class="result-count" id="result-count"></span>
+      </div>
+      <div class="product-grid" id="product-grid"><!-- généré par script.js --></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta-band">
+        <h2>Tu ne trouves pas ce qu'il te faut ?</h2>
+        <p>Décris ton besoin sur WhatsApp — on te dit honnêtement si on peut le fournir, et sous quel délai.</p>
+        <a class="btn btn-whatsapp" href="https://wa.me/22676963696" target="_blank" rel="noopener">💬 Demander sur WhatsApp</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <h4>TechStore Burkina</h4>
+        <p style="color:#8FA0B8;font-size:14px;max-width:36ch;">Boutique tech à Karpala, Ouagadougou. Vente et conseil en informatique, réseau et accessoires, par un ingénieur systèmes &amp; réseaux.</p>
+      </div>
+      <div>
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="index.html">Accueil</a></li>
+          <li><a href="catalogue.html">Catalogue</a></li>
+          <li><a href="index.html#pourquoi">Pourquoi nous</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="https://wa.me/22676963696" target="_blank" rel="noopener">WhatsApp — 76 96 36 96</a></li>
+          <li><a href="https://wa.me/22671896277" target="_blank" rel="noopener">WhatsApp — 71 89 62 77</a></li>
+          <li><a href="https://wa.me/c/22676963696" target="_blank" rel="noopener">Catalogue WhatsApp</a></li>
+          <li><a href="https://facebook.com/techstoreburkina" target="_blank" rel="noopener">Facebook</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="bottom">
+      <span>© <span id="year"></span> TechStore Burkina — Karpala, Ouagadougou</span>
+      <span>Site conçu et maintenu localement</span>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+<script src="assets/script.js"></script>
+</body>
+</html>
