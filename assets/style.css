@@ -232,6 +232,21 @@ nav.main a:hover, nav.main a.active{
 }
 .hero-meta strong{ color:var(--ink); font-weight:700; }
 
+.social-row{
+  display:flex; gap:10px; flex-wrap:wrap;
+  margin-bottom:22px;
+}
+.social-link{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:13px; font-weight:600;
+  color:var(--ink-soft);
+  background:var(--surface);
+  border:1px solid var(--line);
+  padding:8px 14px;
+  border-radius:999px;
+}
+.social-link:hover{ border-color:var(--accent); color:var(--ink); }
+
 .hero-panel{
   background:var(--ink);
   border-radius:16px;
@@ -292,6 +307,9 @@ section{ padding:64px 0; }
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:22px;
+}
+.feat-grid-2{
+  grid-template-columns:repeat(2,1fr);
 }
 .feat{
   background:var(--surface);
@@ -423,6 +441,12 @@ footer.site .bottom{
   font-size:34px;
   margin-bottom:14px;
   color:var(--ink-faint);
+  overflow:hidden;
+}
+.p-thumb img{
+  width:100%; height:100%;
+  object-fit:contain;
+  background:#fff;
 }
 .p-port{
   font-family:var(--font-mono); font-size:10.5px; letter-spacing:.04em;
