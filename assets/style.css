@@ -131,6 +131,11 @@ header.site .wrap{
   font-size:13px;
   font-weight:600;
 }
+.brand .mark-logo{
+  width:34px; height:34px;
+  border-radius:8px;
+  object-fit:cover;
+}
 .brand small{
   font-family:var(--font-mono);
   font-weight:400;
