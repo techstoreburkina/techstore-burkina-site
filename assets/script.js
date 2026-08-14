@@ -1,11 +1,11 @@
 /*
    ==========================================================================
-   VERSION FINALE (v3) - assets/script.js
-   Synchronisation dynamique avec Supabase (Catalogue en temps réel)
+   VERSION FINALE OPTIMISÉE (v5) - assets/script.js
+   Association précise des catégories et support Google Drive robuste.
    ==========================================================================
 */
 
-// 1. CONFIGURATION SUPABASE (Vérifiez bien ces clés)
+// 1. CONFIGURATION SUPABASE
 const SUPABASE_URL = "https://iaoftqelvnkrfiwsdtiy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlhb2Z0cWVsdm5rcmZpd3NkdGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMzgyNTAsImV4cCI6MjA5OTgxNDI1MH0.BZjBJ1XhMact7HB0JIupu9y8VHJZ7Tkj5U_JLmH6wRo";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -31,7 +31,6 @@ let PRODUCTS = [];
 function driveImg(input) {
     if (!input) return null;
     if (input.startsWith('http')) {
-        // Extraction de l'ID à partir d'un lien complet
         let id = null;
         if (input.includes('/file/d/')) {
             id = input.split('/file/d/')[1].split('/')[0];
@@ -40,7 +39,6 @@ function driveImg(input) {
         }
         return id ? `https://lh3.googleusercontent.com/d/${id}` : input;
     }
-    // Si c'est juste l'ID
     return `https://lh3.googleusercontent.com/d/${input}`;
 }
 
@@ -59,7 +57,6 @@ function waLink(nom){
   return `https://wa.me/22676963696?text=${msg}`;
 }
 
-// RÉCUPÉRATION DYNAMIQUE DEPUIS SUPABASE
 async function fetchProductsFromSupabase() {
     const grid = document.getElementById("product-grid");
     if(grid) grid.innerHTML = `<div class="no-results">Chargement des articles...</div>`;
@@ -72,15 +69,14 @@ async function fetchProductsFromSupabase() {
 
         if (error) throw error;
 
-        // Transformation et filtrage (Masquer rupture si option décochée)
         PRODUCTS = data
             .filter(item => item.quantite > 0 || item.afficherSiRupture !== false)
             .map(item => ({
                 id: item.id.toString(),
                 nom: item.nom,
-                // On essaie de faire matcher le nom de la catégorie (ex: "PC portables gaming") avec sa clé ("laptops")
-                categorie: findCategoryKey(item.categorie),
-                specs: item.commentaire || "",
+                // On utilise la catégorie web spécifiée dans l'app, ou on essaie de deviner
+                categorie: item.site_category || findCategoryKey(item.categorie),
+                specs: item.specs_site || "",
                 prix: item.prixVente,
                 stockQty: item.quantite,
                 port: item.site_tag || "",
@@ -90,18 +86,15 @@ async function fetchProductsFromSupabase() {
         initCatalogueLogic();
     } catch (err) {
         console.error("Erreur Supabase:", err);
-        if(grid) grid.innerHTML = `<div class="no-results">Erreur de connexion. Veuillez rafraîchir la page.</div>`;
+        if(grid) grid.innerHTML = `<div class="no-results">Erreur de connexion au serveur.</div>`;
     }
 }
 
-// Trouve la clé (laptops, audio, etc) à partir du nom saisi dans l'app
 function findCategoryKey(dbLabel) {
     const normalized = dbLabel.toLowerCase();
-    // 1. Recherche par label exact
-    const match = CATEGORIES.find(c => c.label.toLowerCase() === normalized);
+    const match = CATEGORIES.find(c => c.label.toLowerCase() === normalized || c.key === normalized);
     if (match) return match.key;
 
-    // 2. Recherche par mot-clé (ex: si l'app contient "PC", on met dans "laptops")
     if (normalized.includes("pc") || normalized.includes("laptop")) return "laptops";
     if (normalized.includes("caméra") || normalized.includes("camera")) return "cameras";
     if (normalized.includes("clavier") || normalized.includes("souris")) return "peripheriques";
@@ -115,23 +108,19 @@ function findCategoryKey(dbLabel) {
     if (normalized.includes("gonflable") || normalized.includes("matelas")) return "gonflables";
     if (normalized.includes("maison") || normalized.includes("connecté") || normalized.includes("domotique")) return "domotique";
 
-    return "peripheriques"; // Par défaut
+    return "peripheriques";
 }
 
 function renderProductGrid(list){
   const grid = document.getElementById("product-grid");
   const count = document.getElementById("result-count");
   if(!grid) return;
-
   if(count) count.textContent = `${list.length} article${list.length>1?"s":""}`;
-
   if(!list.length){
-    grid.innerHTML = `<div class="no-results">Aucun article ne correspond à votre recherche.<br>Contactez-nous sur WhatsApp pour une commande spéciale.</div>`;
+    grid.innerHTML = `<div class="no-results">Aucun article trouvé dans cette sélection.</div>`;
     return;
   }
-
   const catIcon = key => (CATEGORIES.find(c=>c.key===key) || {}).icon || "📦";
-
   grid.innerHTML = list.map(p => {
     const s = stockLabel(p.stockQty);
     return `
@@ -159,12 +148,10 @@ function initCatalogueLogic(){
   const params = new URLSearchParams(window.location.search);
   let activeCat = params.get("cat") || "all";
   let query = "";
-
   const filterBar = document.getElementById("filters");
   filterBar.innerHTML = [{key:"all", label:"Tout"}, ...CATEGORIES].map(c => `
     <button class="filter-btn ${c.key===activeCat?'active':''}" data-cat="${c.key}">${c.icon ? c.icon+" " : ""}${c.label}</button>
   `).join("");
-
   function apply(){
     let list = activeCat === "all" ? PRODUCTS : PRODUCTS.filter(p=>p.categorie===activeCat);
     if(query.trim()){
@@ -173,7 +160,6 @@ function initCatalogueLogic(){
     }
     renderProductGrid(list);
   }
-
   filterBar.addEventListener("click", e => {
     const btn = e.target.closest(".filter-btn");
     if(!btn) return;
@@ -181,18 +167,15 @@ function initCatalogueLogic(){
     filterBar.querySelectorAll(".filter-btn").forEach(b=>b.classList.toggle("active", b===btn));
     apply();
   });
-
   const search = document.getElementById("search-input");
   if(search){
     search.addEventListener("input", e => { query = e.target.value; apply(); });
   }
-
   apply();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   fetchProductsFromSupabase();
-
   const toggle = document.getElementById("nav-toggle");
   const nav = document.getElementById("main-nav");
   if(toggle && nav){
