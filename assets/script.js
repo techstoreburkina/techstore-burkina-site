@@ -1,8 +1,8 @@
-/*
+/* 
    ==========================================================================
-   VERSION FINALE OPTIMISÉE (v5) - assets/script.js
-   Association précise des catégories et support Google Drive robuste.
-   ==========================================================================
+   VERSION FINALE MULTI-CATÉGORIES (v6) - assets/script.js
+   Support de deux catégories par produit et correction du défilement.
+   ========================================================================== 
 */
 
 // 1. CONFIGURATION SUPABASE
@@ -74,9 +74,11 @@ async function fetchProductsFromSupabase() {
             .map(item => ({
                 id: item.id.toString(),
                 nom: item.nom,
-                // On utilise la catégorie web spécifiée dans l'app, ou on essaie de deviner
-                categorie: item.site_category || findCategoryKey(item.categorie),
-                specs: item.specs_site || "",
+                // Utilise la catégorie 1 choisie dans l'app, ou tente de deviner
+                cat1: item.site_category || findCategoryKey(item.categorie),
+                // Utilise la catégorie 2 choisie dans l'app
+                cat2: item.site_category2 || null,
+                specs: item.specs_site || "", 
                 prix: item.prixVente,
                 stockQty: item.quantite,
                 port: item.site_tag || "",
@@ -90,11 +92,12 @@ async function fetchProductsFromSupabase() {
     }
 }
 
+// Fonction de secours si aucune catégorie web n'est choisie
 function findCategoryKey(dbLabel) {
     const normalized = dbLabel.toLowerCase();
     const match = CATEGORIES.find(c => c.label.toLowerCase() === normalized || c.key === normalized);
     if (match) return match.key;
-
+    
     if (normalized.includes("pc") || normalized.includes("laptop")) return "laptops";
     if (normalized.includes("caméra") || normalized.includes("camera")) return "cameras";
     if (normalized.includes("clavier") || normalized.includes("souris")) return "peripheriques";
@@ -120,15 +123,15 @@ function renderProductGrid(list){
     grid.innerHTML = `<div class="no-results">Aucun article trouvé dans cette sélection.</div>`;
     return;
   }
-  const catIcon = key => (CATEGORIES.find(c=>c.key===key) || {}).icon || "📦";
+  const catIcon = p => (CATEGORIES.find(c=>c.key===p.cat1) || {}).icon || "📦";
   grid.innerHTML = list.map(p => {
     const s = stockLabel(p.stockQty);
     return `
     <div class="p-card">
       <div class="p-thumb">${
         p.img
-          ? `<img src="${p.img}" alt="${p.nom}" loading="lazy" onerror="this.parentElement.innerHTML='${catIcon(p.categorie)}';">`
-          : `<span>${catIcon(p.categorie)}</span>`
+          ? `<img src="${p.img}" alt="${p.nom}" loading="lazy" onerror="this.parentElement.innerHTML='${catIcon(p)}';">`
+          : `<span>${catIcon(p)}</span>`
       }</div>
       ${p.port ? `<span class="p-port">${p.port}</span>` : ''}
       <h3>${p.nom}</h3>
@@ -152,14 +155,19 @@ function initCatalogueLogic(){
   filterBar.innerHTML = [{key:"all", label:"Tout"}, ...CATEGORIES].map(c => `
     <button class="filter-btn ${c.key===activeCat?'active':''}" data-cat="${c.key}">${c.icon ? c.icon+" " : ""}${c.label}</button>
   `).join("");
+  
   function apply(){
-    let list = activeCat === "all" ? PRODUCTS : PRODUCTS.filter(p=>p.categorie===activeCat);
+    let list = PRODUCTS;
+    if (activeCat !== "all") {
+        list = list.filter(p => p.cat1 === activeCat || p.cat2 === activeCat);
+    }
     if(query.trim()){
       const q = query.toLowerCase();
       list = list.filter(p => p.nom.toLowerCase().includes(q) || p.specs.toLowerCase().includes(q));
     }
     renderProductGrid(list);
   }
+
   filterBar.addEventListener("click", e => {
     const btn = e.target.closest(".filter-btn");
     if(!btn) return;
@@ -167,6 +175,7 @@ function initCatalogueLogic(){
     filterBar.querySelectorAll(".filter-btn").forEach(b=>b.classList.toggle("active", b===btn));
     apply();
   });
+
   const search = document.getElementById("search-input");
   if(search){
     search.addEventListener("input", e => { query = e.target.value; apply(); });
