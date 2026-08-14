@@ -1,5 +1,11 @@
-// 1. CONFIGURATION SUPABASE
-// 1. CONFIGURATION SUPABASE
+/*
+   ==========================================================================
+   VERSION FINALE (v3) - assets/script.js
+   Synchronisation dynamique avec Supabase (Catalogue en temps réel)
+   ==========================================================================
+*/
+
+// 1. CONFIGURATION SUPABASE (Vérifiez bien ces clés)
 const SUPABASE_URL = "https://iaoftqelvnkrfiwsdtiy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlhb2Z0cWVsdm5rcmZpd3NkdGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMzgyNTAsImV4cCI6MjA5OTgxNDI1MH0.BZjBJ1XhMact7HB0JIupu9y8VHJZ7Tkj5U_JLmH6wRo";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -21,11 +27,21 @@ const CATEGORIES = [
 
 let PRODUCTS = [];
 
-// Image Drive : gère les IDs ou les liens complets
-function driveImg(idOrUrl) { 
-    if (!idOrUrl) return null;
-    if (idOrUrl.startsWith('http')) return idOrUrl;
-    return `https://lh3.googleusercontent.com/d/${idOrUrl}`; 
+// Fonction robuste d'extraction d'ID Google Drive
+function driveImg(input) {
+    if (!input) return null;
+    if (input.startsWith('http')) {
+        // Extraction de l'ID à partir d'un lien complet
+        let id = null;
+        if (input.includes('/file/d/')) {
+            id = input.split('/file/d/')[1].split('/')[0];
+        } else if (input.includes('id=')) {
+            id = input.split('id=')[1].split('&')[0];
+        }
+        return id ? `https://lh3.googleusercontent.com/d/${id}` : input;
+    }
+    // Si c'est juste l'ID
+    return `https://lh3.googleusercontent.com/d/${input}`;
 }
 
 function fmtPrice(p){
@@ -43,10 +59,10 @@ function waLink(nom){
   return `https://wa.me/22676963696?text=${msg}`;
 }
 
-// RÉCUPÉRATION DYNAMIQUE
+// RÉCUPÉRATION DYNAMIQUE DEPUIS SUPABASE
 async function fetchProductsFromSupabase() {
     const grid = document.getElementById("product-grid");
-    if(grid) grid.innerHTML = `<div class="no-results">Chargement du catalogue...</div>`;
+    if(grid) grid.innerHTML = `<div class="no-results">Chargement des articles...</div>`;
 
     try {
         const { data, error } = await supabaseClient
@@ -56,23 +72,50 @@ async function fetchProductsFromSupabase() {
 
         if (error) throw error;
 
-        PRODUCTS = data.map(item => ({
-            id: item.id.toString(),
-            nom: item.nom,
-            // Match simple avec les clés CATEGORIES
-            categorie: item.categorie.toLowerCase().replace(/\s+/g, '-'), 
-            specs: item.commentaire || "",
-            prix: item.prixVente,
-            stockQty: item.quantite,
-            port: item.site_tag || "",
-            img: driveImg(item.url_visuel)
-        }));
+        // Transformation et filtrage (Masquer rupture si option décochée)
+        PRODUCTS = data
+            .filter(item => item.quantite > 0 || item.afficherSiRupture !== false)
+            .map(item => ({
+                id: item.id.toString(),
+                nom: item.nom,
+                // On essaie de faire matcher le nom de la catégorie (ex: "PC portables gaming") avec sa clé ("laptops")
+                categorie: findCategoryKey(item.categorie),
+                specs: item.commentaire || "",
+                prix: item.prixVente,
+                stockQty: item.quantite,
+                port: item.site_tag || "",
+                img: driveImg(item.url_visuel)
+            }));
 
         initCatalogueLogic();
     } catch (err) {
-        console.error("Erreur:", err);
-        if(grid) grid.innerHTML = `<div class="no-results">Impossible de charger le catalogue. Réessayez plus tard.</div>`;
+        console.error("Erreur Supabase:", err);
+        if(grid) grid.innerHTML = `<div class="no-results">Erreur de connexion. Veuillez rafraîchir la page.</div>`;
     }
+}
+
+// Trouve la clé (laptops, audio, etc) à partir du nom saisi dans l'app
+function findCategoryKey(dbLabel) {
+    const normalized = dbLabel.toLowerCase();
+    // 1. Recherche par label exact
+    const match = CATEGORIES.find(c => c.label.toLowerCase() === normalized);
+    if (match) return match.key;
+
+    // 2. Recherche par mot-clé (ex: si l'app contient "PC", on met dans "laptops")
+    if (normalized.includes("pc") || normalized.includes("laptop")) return "laptops";
+    if (normalized.includes("caméra") || normalized.includes("camera")) return "cameras";
+    if (normalized.includes("clavier") || normalized.includes("souris")) return "peripheriques";
+    if (normalized.includes("casque")) return "casques";
+    if (normalized.includes("enceinte") || normalized.includes("son") || normalized.includes("audio")) return "audio";
+    if (normalized.includes("ram") || normalized.includes("disque") || normalized.includes("stockage")) return "stockage";
+    if (normalized.includes("wifi") || normalized.includes("bluetooth") || normalized.includes("dongle")) return "dongles";
+    if (normalized.includes("adaptateur") || normalized.includes("câble")) return "av";
+    if (normalized.includes("dock") || normalized.includes("station")) return "dock";
+    if (normalized.includes("ventilateur") || normalized.includes("refroidissement")) return "refroidissement";
+    if (normalized.includes("gonflable") || normalized.includes("matelas")) return "gonflables";
+    if (normalized.includes("maison") || normalized.includes("connecté") || normalized.includes("domotique")) return "domotique";
+
+    return "peripheriques"; // Par défaut
 }
 
 function renderProductGrid(list){
@@ -80,10 +123,10 @@ function renderProductGrid(list){
   const count = document.getElementById("result-count");
   if(!grid) return;
 
-  if(count) count.textContent = `${list.length} produit${list.length>1?"s":""}`;
-  
+  if(count) count.textContent = `${list.length} article${list.length>1?"s":""}`;
+
   if(!list.length){
-    grid.innerHTML = `<div class="no-results">Aucun produit trouvé.<br>Contactez-nous sur WhatsApp !</div>`;
+    grid.innerHTML = `<div class="no-results">Aucun article ne correspond à votre recherche.<br>Contactez-nous sur WhatsApp pour une commande spéciale.</div>`;
     return;
   }
 
