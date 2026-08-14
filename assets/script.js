@@ -1,6 +1,7 @@
 // 1. CONFIGURATION SUPABASE
-const SUPABASE_URL = "VOTRE_URL_SUPABASE_ICI";
-const SUPABASE_KEY = "VOTRE_CLE_ANON_ICI";
+// 1. CONFIGURATION SUPABASE
+const SUPABASE_URL = "https://iaoftqelvnkrfiwsdtiy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlhb2Z0cWVsdm5rcmZpd3NkdGl5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyMzgyNTAsImV4cCI6MjA5OTgxNDI1MH0.BZjBJ1XhMact7HB0JIupu9y8VHJZ7Tkj5U_JLmH6wRo";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const CATEGORIES = [
