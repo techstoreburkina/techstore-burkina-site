@@ -1,8 +1,8 @@
-/* 
+/*
    ==========================================================================
-   VERSION FINALE MULTI-CATÉGORIES (v6) - assets/script.js
-   Support de deux catégories par produit et correction du défilement.
-   ========================================================================== 
+   VERSION FINALE PROFESSIONNELLE (v7) - assets/script.js
+   Grille Carrée (1:1), Vue Détails (Modal) et Sync Supabase.
+   ==========================================================================
 */
 
 // 1. CONFIGURATION SUPABASE
@@ -57,6 +57,7 @@ function waLink(nom){
   return `https://wa.me/22676963696?text=${msg}`;
 }
 
+// RÉCUPÉRATION DYNAMIQUE
 async function fetchProductsFromSupabase() {
     const grid = document.getElementById("product-grid");
     if(grid) grid.innerHTML = `<div class="no-results">Chargement des articles...</div>`;
@@ -74,11 +75,9 @@ async function fetchProductsFromSupabase() {
             .map(item => ({
                 id: item.id.toString(),
                 nom: item.nom,
-                // Utilise la catégorie 1 choisie dans l'app, ou tente de deviner
                 cat1: item.site_category || findCategoryKey(item.categorie),
-                // Utilise la catégorie 2 choisie dans l'app
                 cat2: item.site_category2 || null,
-                specs: item.specs_site || "", 
+                specs: item.specs_site || "",
                 prix: item.prixVente,
                 stockQty: item.quantite,
                 port: item.site_tag || "",
@@ -92,12 +91,10 @@ async function fetchProductsFromSupabase() {
     }
 }
 
-// Fonction de secours si aucune catégorie web n'est choisie
 function findCategoryKey(dbLabel) {
     const normalized = dbLabel.toLowerCase();
     const match = CATEGORIES.find(c => c.label.toLowerCase() === normalized || c.key === normalized);
     if (match) return match.key;
-    
     if (normalized.includes("pc") || normalized.includes("laptop")) return "laptops";
     if (normalized.includes("caméra") || normalized.includes("camera")) return "cameras";
     if (normalized.includes("clavier") || normalized.includes("souris")) return "peripheriques";
@@ -110,10 +107,10 @@ function findCategoryKey(dbLabel) {
     if (normalized.includes("ventilateur") || normalized.includes("refroidissement")) return "refroidissement";
     if (normalized.includes("gonflable") || normalized.includes("matelas")) return "gonflables";
     if (normalized.includes("maison") || normalized.includes("connecté") || normalized.includes("domotique")) return "domotique";
-
     return "peripheriques";
 }
 
+// RENDU DE LA GRILLE
 function renderProductGrid(list){
   const grid = document.getElementById("product-grid");
   const count = document.getElementById("result-count");
@@ -124,10 +121,11 @@ function renderProductGrid(list){
     return;
   }
   const catIcon = p => (CATEGORIES.find(c=>c.key===p.cat1) || {}).icon || "📦";
+
   grid.innerHTML = list.map(p => {
     const s = stockLabel(p.stockQty);
     return `
-    <div class="p-card">
+    <div class="p-card" onclick="showProductDetails('${p.id}')">
       <div class="p-thumb">${
         p.img
           ? `<img src="${p.img}" alt="${p.nom}" loading="lazy" onerror="this.parentElement.innerHTML='${catIcon(p)}';">`
@@ -141,12 +139,62 @@ function renderProductGrid(list){
           <div class="p-price">${fmtPrice(p.prix)}</div>
           <div class="p-stock ${s.c}">${s.l}</div>
         </div>
-        <a class="btn btn-whatsapp btn-sm" href="${waLink(p.nom)}" target="_blank" rel="noopener">Commander</a>
+        <button class="btn btn-whatsapp btn-sm">Détails</button>
       </div>
     </div>
   `}).join("");
 }
 
+// GESTION DU MODAL (VUE DÉTAILS)
+function showProductDetails(id) {
+    const p = PRODUCTS.find(prod => prod.id === id);
+    if (!p) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay active';
+    overlay.id = 'modal-container';
+
+    const s = stockLabel(p.stockQty);
+    const catIcon = (CATEGORIES.find(c=>c.key===p.cat1) || {}).icon || "📦";
+
+    overlay.innerHTML = `
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-close" onclick="closeModal()">✕</div>
+            <div class="modal-left">
+                ${p.img ? `<img src="${p.img}" alt="${p.nom}">` : `<span style="font-size:100px">${catIcon}</span>`}
+            </div>
+            <div class="modal-right">
+                ${p.port ? `<span class="p-port">${p.port}</span>` : ''}
+                <h2>${p.nom}</h2>
+                <div class="full-specs">${p.specs || "Aucune description technique disponible."}</div>
+
+                <div class="price-row">
+                    <div>
+                        <div class="p-price" style="font-size:24px">${fmtPrice(p.prix)}</div>
+                        <div class="p-stock ${s.c}" style="font-size:14px">${s.l}</div>
+                    </div>
+                    <a href="${waLink(p.nom)}" target="_blank" class="btn btn-whatsapp">
+                        💬 Commander
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+
+    overlay.onclick = closeModal;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden'; // Bloque le scroll arrière
+}
+
+function closeModal() {
+    const modal = document.getElementById('modal-container');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = '';
+    }
+}
+
+// INITIALISATION
 function initCatalogueLogic(){
   const params = new URLSearchParams(window.location.search);
   let activeCat = params.get("cat") || "all";
@@ -155,7 +203,7 @@ function initCatalogueLogic(){
   filterBar.innerHTML = [{key:"all", label:"Tout"}, ...CATEGORIES].map(c => `
     <button class="filter-btn ${c.key===activeCat?'active':''}" data-cat="${c.key}">${c.icon ? c.icon+" " : ""}${c.label}</button>
   `).join("");
-  
+
   function apply(){
     let list = PRODUCTS;
     if (activeCat !== "all") {
@@ -177,9 +225,8 @@ function initCatalogueLogic(){
   });
 
   const search = document.getElementById("search-input");
-  if(search){
-    search.addEventListener("input", e => { query = e.target.value; apply(); });
-  }
+  if(search) search.addEventListener("input", e => { query = e.target.value; apply(); });
+
   apply();
 }
 
@@ -187,7 +234,10 @@ document.addEventListener("DOMContentLoaded", () => {
   fetchProductsFromSupabase();
   const toggle = document.getElementById("nav-toggle");
   const nav = document.getElementById("main-nav");
-  if(toggle && nav){
-    toggle.addEventListener("click", () => nav.classList.toggle("open"));
-  }
+  if(toggle && nav) toggle.addEventListener("click", () => nav.classList.toggle("open"));
+
+  // Fermeture Echap
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
 });
