@@ -1,7 +1,9 @@
 /*
    ==========================================================================
-   VERSION FINALE PROFESSIONNELLE (v7) - assets/script.js
-   Grille Carrée (1:1), Vue Détails (Modal) et Sync Supabase.
+   VERSION FINALE ROBUSTE (v8) - assets/script.js
+   - Grille automatique et alignée (1:1)
+   - Vue Détails (Modal) fonctionnelle au clic
+   - Synchronisation Supabase en temps réel
    ==========================================================================
 */
 
@@ -60,7 +62,7 @@ function waLink(nom){
 // RÉCUPÉRATION DYNAMIQUE
 async function fetchProductsFromSupabase() {
     const grid = document.getElementById("product-grid");
-    if(grid) grid.innerHTML = `<div class="no-results">Chargement des articles...</div>`;
+    if(grid) grid.innerHTML = `<div class="no-results">Récupération des stocks en cours...</div>`;
 
     try {
         const { data, error } = await supabaseClient
@@ -84,10 +86,11 @@ async function fetchProductsFromSupabase() {
                 img: driveImg(item.url_visuel)
             }));
 
+        console.log(`${PRODUCTS.length} produits chargés.`);
         initCatalogueLogic();
     } catch (err) {
         console.error("Erreur Supabase:", err);
-        if(grid) grid.innerHTML = `<div class="no-results">Erreur de connexion au serveur.</div>`;
+        if(grid) grid.innerHTML = `<div class="no-results">Serveur injoignable. Vérifiez votre connexion.</div>`;
     }
 }
 
@@ -116,30 +119,31 @@ function renderProductGrid(list){
   const count = document.getElementById("result-count");
   if(!grid) return;
   if(count) count.textContent = `${list.length} article${list.length>1?"s":""}`;
+
   if(!list.length){
-    grid.innerHTML = `<div class="no-results">Aucun article trouvé dans cette sélection.</div>`;
+    grid.innerHTML = `<div class="no-results">Aucun article trouvé.<br>Écrivez-nous sur WhatsApp pour une commande spéciale !</div>`;
     return;
   }
+
   const catIcon = p => (CATEGORIES.find(c=>c.key===p.cat1) || {}).icon || "📦";
 
   grid.innerHTML = list.map(p => {
     const s = stockLabel(p.stockQty);
+    // On force l'appel à showProductDetails sur toute la carte
     return `
     <div class="p-card" onclick="showProductDetails('${p.id}')">
-      <div class="p-thumb">${
-        p.img
-          ? `<img src="${p.img}" alt="${p.nom}" loading="lazy" onerror="this.parentElement.innerHTML='${catIcon(p)}';">`
-          : `<span>${catIcon(p)}</span>`
-      }</div>
+      <div class="p-thumb">
+        ${p.img ? `<img src="${p.img}" alt="${p.nom}" loading="lazy">` : `<span style="font-size:40px">${catIcon(p)}</span>`}
+      </div>
       ${p.port ? `<span class="p-port">${p.port}</span>` : ''}
       <h3>${p.nom}</h3>
-      <p class="p-spec">${p.specs}</p>
+      <div class="p-spec">${p.specs}</div>
       <div class="p-foot">
         <div>
           <div class="p-price">${fmtPrice(p.prix)}</div>
           <div class="p-stock ${s.c}">${s.l}</div>
         </div>
-        <button class="btn btn-whatsapp btn-sm">Détails</button>
+        <button class="btn btn-primary btn-sm">Détails</button>
       </div>
     </div>
   `}).join("");
@@ -149,6 +153,10 @@ function renderProductGrid(list){
 function showProductDetails(id) {
     const p = PRODUCTS.find(prod => prod.id === id);
     if (!p) return;
+
+    // Supprime un éventuel modal déjà existant
+    const oldModal = document.getElementById('modal-container');
+    if (oldModal) oldModal.remove();
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay active';
@@ -161,20 +169,20 @@ function showProductDetails(id) {
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-close" onclick="closeModal()">✕</div>
             <div class="modal-left">
-                ${p.img ? `<img src="${p.img}" alt="${p.nom}">` : `<span style="font-size:100px">${catIcon}</span>`}
+                ${p.img ? `<img src="${p.img}" alt="${p.nom}">` : `<span style="font-size:120px">${catIcon}</span>`}
             </div>
             <div class="modal-right">
                 ${p.port ? `<span class="p-port">${p.port}</span>` : ''}
                 <h2>${p.nom}</h2>
-                <div class="full-specs">${p.specs || "Aucune description technique disponible."}</div>
+                <div class="full-specs">${p.specs || "Aucune description technique détaillée disponible pour le moment."}</div>
 
-                <div class="price-row">
+                <div class="modal-price-row">
                     <div>
-                        <div class="p-price" style="font-size:24px">${fmtPrice(p.prix)}</div>
-                        <div class="p-stock ${s.c}" style="font-size:14px">${s.l}</div>
+                        <div class="p-price" style="font-size:26px">${fmtPrice(p.prix)}</div>
+                        <div class="p-stock ${s.c}" style="font-size:14px; margin-top:4px;">${s.l}</div>
                     </div>
-                    <a href="${waLink(p.nom)}" target="_blank" class="btn btn-whatsapp">
-                        💬 Commander
+                    <a href="${waLink(p.nom)}" target="_blank" class="btn btn-whatsapp" style="padding: 14px 28px;">
+                        💬 Commander sur WhatsApp
                     </a>
                 </div>
             </div>
@@ -183,7 +191,7 @@ function showProductDetails(id) {
 
     overlay.onclick = closeModal;
     document.body.appendChild(overlay);
-    document.body.style.overflow = 'hidden'; // Bloque le scroll arrière
+    document.body.style.overflow = 'hidden';
 }
 
 function closeModal() {
@@ -200,6 +208,8 @@ function initCatalogueLogic(){
   let activeCat = params.get("cat") || "all";
   let query = "";
   const filterBar = document.getElementById("filters");
+  if(!filterBar) return;
+
   filterBar.innerHTML = [{key:"all", label:"Tout"}, ...CATEGORIES].map(c => `
     <button class="filter-btn ${c.key===activeCat?'active':''}" data-cat="${c.key}">${c.icon ? c.icon+" " : ""}${c.label}</button>
   `).join("");
@@ -236,7 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const nav = document.getElementById("main-nav");
   if(toggle && nav) toggle.addEventListener("click", () => nav.classList.toggle("open"));
 
-  // Fermeture Echap
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeModal();
   });
