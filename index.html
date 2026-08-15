@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TechStore Burkina — Premium Tech Shop</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+    <title>TechStore Burkina — Excellence Technologique</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;600;700&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -15,12 +15,11 @@
             <img class="mark-logo" src="https://drive.google.com/thumbnail?id=1hEJ1H8CitZmhwNdnBL6qHXafMuxLKHJH&sz=w100" alt="Logo">
             <span>TechStore Burkina</span>
         </a>
-        <button class="nav-toggle" id="nav-toggle"><span></span><span></span><span></span></button>
-        <nav class="main" id="main-nav">
+        <button class="nav-toggle" id="nav-toggle" style="display:none;"><span></span></button>
+        <nav class="main">
             <ul>
                 <li><a href="index.html" class="active">Accueil</a></li>
                 <li><a href="catalogue.html">Catalogue</a></li>
-                <li><a href="index.html#contact">Contact</a></li>
                 <li><a class="btn btn-whatsapp btn-sm" href="https://wa.me/22676963696">💬 WhatsApp</a></li>
             </ul>
         </nav>
@@ -31,30 +30,32 @@
     <section class="hero">
         <div class="wrap">
             <div class="hero-content">
-                <span class="eyebrow" style="color: var(--accent); font-weight: 700; font-size: 14px; margin-bottom: 12px; display: block;">● INGÉNIERIE & CONSEIL</span>
-                <h1>Le matériel tech, <span class="hl">choisi avec méthode</span>.</h1>
-                <p class="lead">PC gaming, caméras Wi-Fi et accessoires réseau. Nous sélectionnons le meilleur du marché mondial pour le contexte local de Ouagadougou.</p>
+                <span class="eyebrow" style="color: var(--accent); font-weight: 700; font-size: 14px; margin-bottom: 12px; display: block;">● TECHSTORE BURKINA</span>
+                <h1>L'excellence technologique, <span class="hl">validée par l'expertise</span>.</h1>
+                <p class="lead">Solutions informatiques de pointe : PC gaming, caméras haute définition et infrastructure réseau. Un conseil d'ingénieur pour des performances garanties.</p>
                 <div class="hero-cta">
-                    <a class="btn btn-primary" href="catalogue.html">Explorer le catalogue</a>
-                    <a href="#" id="btn-download-apk" class="btn btn-outline">⬇️ Télécharger l'App</a>
+                    <a class="btn btn-primary" href="catalogue.html">Consulter le catalogue</a>
+                    <a href="#" id="btn-download-apk" class="btn btn-outline">⬇️ Télécharger l'Application</a>
                 </div>
             </div>
+
             <div class="hero-panel">
-                <div class="title">TERMINAL_CLIENT v1.0.1</div>
-                <div class="row"><span>Propriétaire</span><span>C. Thomas KABORÉ</span></div>
-                <div class="row"><span>Spécialité</span><span>Systèmes & Réseaux</span></div>
-                <div class="row"><span>Localisation</span><span>Karpala, Ouaga</span></div>
-                <div class="row"><span>Statut</span><span class="ok">● Opérationnel</span></div>
+                <div class="title">INFORMATIONS GÉNÉRALES</div>
+                <div class="row"><span>Admin :</span><span>Christian Thomas KABORÉ</span></div>
+                <div class="row"><span>Spécialité :</span><span>Ingénieur de Conception en Management des Systèmes et Réseaux</span></div>
+                <div class="row"><span>Localisation :</span><span>Karpala, Ouagadougou</span></div>
+                <div class="row"><span>Statut :</span><span class="ok">● OPÉRATIONNEL</span></div>
             </div>
         </div>
     </section>
 
-    <section style="background: #fff; border-top: 1px solid var(--line);">
+    <section id="categories" style="background: #fff; border-top: 1px solid var(--line);">
         <div class="wrap">
-            <div class="section-head" style="text-align: center;">
-                <h2>Chercher par catégorie</h2>
+            <div class="section-head" style="text-align: center; margin-bottom: 50px;">
+                <span class="kicker">Univers</span>
+                <h2>Nos domaines d'expertise</h2>
             </div>
-            <div class="cat-strip" id="cat-strip" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px;">
+            <div class="cat-strip" id="cat-strip">
                 <!-- Dynamique via JS -->
             </div>
         </div>
@@ -62,14 +63,13 @@
 </main>
 
 <footer class="site">
-    <div class="wrap">
-        <div style="text-align: center; opacity: 0.6; font-size: 13px;">
-            © <span id="year"></span> TechStore Burkina — Conçu pour l'excellence.
-        </div>
+    <div class="wrap" style="text-align: center; padding: 40px 0;">
+        <p style="opacity: 0.5; font-size: 13px;">© <span id="year"></span> TechStore Burkina — Excellence & Innovation.</p>
     </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/script.js"></script>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>
