@@ -1,10 +1,10 @@
-/*
+/* 
    ==========================================================================
-   VERSION COMPLÈTE CONNECTÉE (v10) - assets/script.js
-   - Grille 1:1, Vue Détails (Modal)
+   VERSION CONNECTÉE (v11) - assets/script.js
+   - Grille 1:1 et Vue Détails (Modal)
    - Synchronisation Supabase en temps réel
-   - Téléchargement APK dynamique + Date de mise à jour
-   ==========================================================================
+   - Téléchargement APK dynamique et Date de mise à jour
+   ========================================================================== 
 */
 
 // 1. CONFIGURATION SUPABASE
@@ -40,59 +40,67 @@ function driveImg(input) {
     return `https://lh3.googleusercontent.com/d/${input}`;
 }
 
-const fmtPrice = (p) => p > 0 ? new Intl.NumberFormat('fr-FR').format(p) + " FCFA" : "Sur devis";
-const stockLabel = (q) => q > 5 ? {l:"En stock",c:"in"} : (q > 0 ? {l:"Stock limité",c:"low"} : {l:"Sur commande",c:"out"});
+const fmtPrice = (p) => p > 0 ? new Intl.NumberFormat('fr-FR').format(p) + " F CFA" : "Sur devis";
+const stockLabel = (q) => q > 5 ? {l:"En stock",c:"in"} : (q > 0 ? {l:"Stock limité",c:"low"} : {l:"Stock épuisé",c:"out"});
 const waLink = (nom) => `https://wa.me/22676963696?text=${encodeURIComponent("Bonjour TechStore, je suis intéressé par l'article : " + nom)}`;
 
 // 2. RÉCUPÉRATION DES PRODUITS
 async function fetchProducts() {
-    const grid = document.getElementById("product-grid");
-    if(grid) grid.innerHTML = `<div class="no-results">Chargement du catalogue...</div>`;
-
     try {
         const { data, error } = await supabaseClient.from('catalogue').select('*').order('nom', { ascending: true });
         if (error) throw error;
         PRODUCTS = data.filter(item => item.quantite > 0 || item.afficherSiRupture !== false).map(item => ({
-            id: item.id.toString(), nom: item.nom,
+            id: item.id.toString(), nom: item.nom, 
             cat1: item.site_category || findCategoryKey(item.categorie),
-            cat2: item.site_category2 || null, specs: item.specs_site || "",
+            cat2: item.site_category2 || null, specs: item.specs_site || "", 
             prix: item.prixVente, stockQty: item.quantite, port: item.site_tag || "", img: driveImg(item.url_visuel)
         }));
-        if (grid) initCatalogueLogic();
+        if (document.getElementById("product-grid")) initCatalogueLogic();
+        if (document.getElementById("cat-strip")) renderCategoryStrip("cat-strip");
     } catch (err) { console.error(err); }
 }
 
 // 3. MISE À JOUR APK DYNAMIQUE
 async function fetchUpdateInfo() {
     try {
-        const { data, error } = await supabaseClient
-            .from('controle_version')
-            .select('*')
-            .eq('app_id', 'client')
-            .single();
-
+        const { data, error } = await supabaseClient.from('controle_version').select('*').eq('app_id', 'client').single();
         if (error || !data) return;
 
-        // Mise à jour du lien de téléchargement (si ID d'un bouton existe)
         const btnDl = document.getElementById('btn-download-apk');
-        if (btnDl) {
+        if (btnDl && data.download_url) {
             btnDl.href = data.download_url;
-            const date = new Date(data.updated_at_long * 1000);
-            const dateStr = `${date.getDate().toString().padStart(2,'0')}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getFullYear()}`;
-            btnDl.innerHTML = `⬇️ Télécharger l'App (Mise à jour le ${dateStr})`;
+            if (data.updated_at_long > 0) {
+                const date = new Date(data.updated_at_long * 1000);
+                const dateStr = `${date.getDate().toString().padStart(2,'0')}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getFullYear()}`;
+                btnDl.innerHTML = `⬇️ Télécharger l'App (Mise à jour le ${dateStr})`;
+            } else {
+                btnDl.innerHTML = `⬇️ Télécharger l'Application`;
+            }
         }
-    } catch (err) { console.error("Update fetch error", err); }
+    } catch (err) { console.error(err); }
 }
 
-// --- RENDU ET LOGIQUE (Idem v9 mais avec fetchUpdateInfo) ---
-// ... (Copier renderProductGrid, showProductDetails, findCategoryKey, etc. de v9) ...
+// --- LOGIQUE RENDU (Catégories accueil, Grille, Modal) ---
+
+function renderCategoryStrip(targetId){
+  const el = document.getElementById(targetId);
+  if(!el) return;
+  el.innerHTML = CATEGORIES.map(c => {
+    const count = PRODUCTS.filter(p => p.cat1 === c.key || p.cat2 === c.key).length;
+    return `
+    <a class="cat-card" href="catalogue.html?cat=${c.key}">
+      <div class="ic">${c.icon}</div>
+      <h3>${c.label}</h3>
+      <p>${count} référence(s)</p>
+    </a>
+  `}).join("");
+}
 
 function renderProductGrid(list){
   const grid = document.getElementById("product-grid");
   const count = document.getElementById("result-count");
   if(!grid) return;
   if(count) count.textContent = `${list.length} article${list.length>1?"s":""}`;
-  if(!list.length) { grid.innerHTML = `<div class="no-results">Aucun article trouvé.</div>`; return; }
   const catIcon = p => (CATEGORIES.find(c=>c.key===p.cat1) || {}).icon || "📦";
   grid.innerHTML = list.map(p => {
     const s = stockLabel(p.stockQty);
