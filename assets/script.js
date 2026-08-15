@@ -1,9 +1,10 @@
 /*
    ==========================================================================
-   VERSION AVEC TÉLÉCHARGEMENT DIRECT (v12) - assets/script.js
-   - Grille 1:1 et Vue Détails (Modal)
-   - Synchronisation Supabase en temps réel
-   - Téléchargement APK DIRECT (bypass l'interface Drive)
+   VERSION FINALE ROBUSTE (v13) - assets/script.js
+   - Navigation Mobile Fluide
+   - Grille automatique (1:1)
+   - Vue Détails (Modal)
+   - Synchronisation Supabase & Téléchargement Direct
    ==========================================================================
 */
 
@@ -29,7 +30,7 @@ const CATEGORIES = [
 
 let PRODUCTS = [];
 
-// Extrait l'ID Google Drive pour les images
+// Fonction Drive robuste
 function driveImg(input) {
     if (!input) return null;
     if (input.startsWith('http')) {
@@ -41,7 +42,7 @@ function driveImg(input) {
     return `https://lh3.googleusercontent.com/d/${input}`;
 }
 
-// Extrait l'ID Google Drive pour le TÉLÉCHARGEMENT DIRECT
+// Téléchargement direct
 function getDirectDownloadLink(input) {
     if (!input) return "#";
     let id = input;
@@ -54,48 +55,46 @@ function getDirectDownloadLink(input) {
 
 const fmtPrice = (p) => p > 0 ? new Intl.NumberFormat('fr-FR').format(p) + " F CFA" : "Sur devis";
 const stockLabel = (q) => q > 5 ? {l:"En stock",c:"in"} : (q > 0 ? {l:"Stock limité",c:"low"} : {l:"Stock épuisé",c:"out"});
-const waLink = (nom) => `https://wa.me/22676963696?text=${encodeURIComponent("Bonjour TechStore, je suis intéressé par l'article : " + nom)}`;
+const waLink = (nom) => `https://wa.me/22676963696?text=${encodeURIComponent("Bonjour TechStore, je suis intéressé par : " + nom)}`;
 
-// 2. RÉCUPÉRATION DES PRODUITS
-async function fetchProducts() {
+// 2. RÉCUPÉRATION DES DONNÉES
+async function fetchAllData() {
     try {
         const { data, error } = await supabaseClient.from('catalogue').select('*').order('nom', { ascending: true });
         if (error) throw error;
+
         PRODUCTS = data.filter(item => item.quantite > 0 || item.afficherSiRupture !== false).map(item => ({
             id: item.id.toString(), nom: item.nom,
             cat1: item.site_category || findCategoryKey(item.categorie),
-            cat2: item.site_category2 || null, specs: item.specs_site || "",
+            cat2: item.site_category2 || null,
+            specs: item.specs_site || "",
             prix: item.prixVente, stockQty: item.quantite, port: item.site_tag || "", img: driveImg(item.url_visuel)
         }));
-        if (document.getElementById("product-grid")) initCatalogueLogic();
-        if (document.getElementById("cat-strip")) renderCategoryStrip("cat-strip");
-    } catch (err) { console.error(err); }
+
+        if (document.getElementById('product-grid')) initCatalogueLogic();
+        if (document.getElementById('cat-strip')) renderCategoryStrip("cat-strip");
+        fetchUpdateInfo();
+
+    } catch (err) { console.error("Erreur:", err); }
 }
 
-// 3. MISE À JOUR APK DYNAMIQUE (DIRECTE)
 async function fetchUpdateInfo() {
     try {
         const { data, error } = await supabaseClient.from('controle_version').select('*').eq('app_id', 'client').single();
         if (error || !data) return;
-
         const btnDl = document.getElementById('btn-download-apk');
         if (btnDl && data.download_url) {
-            // TRANSFORMATION EN LIEN DIRECT
             btnDl.href = getDirectDownloadLink(data.download_url);
-
             if (data.updated_at_long > 0) {
                 const date = new Date(data.updated_at_long * 1000);
-                const dateStr = `${date.getDate().toString().padStart(2,'0')}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getFullYear()}`;
-                btnDl.innerHTML = `⬇️ Télécharger l'App (Mise à jour le ${dateStr})`;
-            } else {
-                btnDl.innerHTML = `⬇️ Télécharger l'Application`;
+                const ds = `${date.getDate().toString().padStart(2,'0')}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getFullYear()}`;
+                btnDl.innerHTML = `⬇️ Télécharger l'App (MàJ ${ds})`;
             }
         }
-    } catch (err) { console.error(err); }
+    } catch (e) {}
 }
 
-// --- LOGIQUE RENDU ---
-
+// 3. LOGIQUE RENDU
 function renderCategoryStrip(targetId){
   const el = document.getElementById(targetId);
   if(!el) return;
@@ -115,12 +114,16 @@ function renderProductGrid(list){
   const count = document.getElementById("result-count");
   if(!grid) return;
   if(count) count.textContent = `${list.length} article${list.length>1?"s":""}`;
+  if(!list.length) { grid.innerHTML = `<div class="no-results">Aucun article trouvé.</div>`; return; }
+
   const catIcon = p => (CATEGORIES.find(c=>c.key===p.cat1) || {}).icon || "📦";
   grid.innerHTML = list.map(p => {
     const s = stockLabel(p.stockQty);
     return `
     <div class="p-card" onclick="showProductDetails('${p.id}')">
-      <div class="p-thumb">${p.img ? `<img src="${p.img}" alt="${p.nom}" loading="lazy">` : `<span style="font-size:40px">${catIcon(p)}</span>`}</div>
+      <div class="p-thumb">
+        ${p.img ? `<img src="${p.img}" alt="${p.nom}" loading="lazy" onerror="this.src=''">` : `<span style="font-size:40px">${catIcon(p)}</span>`}
+      </div>
       ${p.port ? `<span class="p-port">${p.port}</span>` : ''}
       <h3>${p.nom}</h3>
       <div class="p-spec">${p.specs}</div>
@@ -137,7 +140,25 @@ function showProductDetails(id) {
     const oldModal = document.getElementById('modal-container'); if (oldModal) oldModal.remove();
     const overlay = document.createElement('div'); overlay.className = 'modal-overlay active'; overlay.id = 'modal-container';
     const s = stockLabel(p.stockQty); const catIcon = (CATEGORIES.find(c=>c.key===p.cat1) || {}).icon || "📦";
-    overlay.innerHTML = `<div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal()">✕</div><div class="modal-left">${p.img ? `<img src="${p.img}" alt="${p.nom}">` : `<span style="font-size:120px">${catIcon}</span>`}</div><div class="modal-right">${p.port ? `<span class="p-port">${p.port}</span>` : ''}<h2>${p.nom}</h2><div class="full-specs">${p.specs || "Détails à venir."}</div><div class="modal-price-row"><div><div class="p-price" style="font-size:26px">${fmtPrice(p.prix)}</div><div class="p-stock ${s.c}" style="font-size:14px; margin-top:4px;">${s.l}</div></div><a href="${waLink(p.nom)}" target="_blank" class="btn btn-whatsapp" style="padding: 14px 28px;">💬 WhatsApp</a></div></div></div>`;
+    overlay.innerHTML = `
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-close" onclick="closeModal()">✕</div>
+            <div class="modal-left">
+                ${p.img ? `<img src="${p.img}" alt="${p.nom}">` : `<span style="font-size:120px">${catIcon}</span>`}
+            </div>
+            <div class="modal-right">
+                ${p.port ? `<span class="p-port">${p.port}</span>` : ''}
+                <h2>${p.nom}</h2>
+                <div class="full-specs">${p.specs || "Détails à venir."}</div>
+                <div class="modal-price-row">
+                    <div>
+                        <div class="p-price" style="font-size:26px">${fmtPrice(p.prix)}</div>
+                        <div class="p-stock ${s.c}" style="font-size:14px; margin-top:4px;">${s.l}</div>
+                    </div>
+                    <a href="${waLink(p.nom)}" target="_blank" class="btn btn-whatsapp">💬 WhatsApp</a>
+                </div>
+            </div>
+        </div>`;
     overlay.onclick = closeModal; document.body.appendChild(overlay); document.body.style.overflow = 'hidden';
 }
 function closeModal() { const modal = document.getElementById('modal-container'); if (modal) { modal.remove(); document.body.style.overflow = ''; } }
@@ -181,11 +202,23 @@ function findCategoryKey(dbLabel) {
     return "peripheriques";
 }
 
+// 4. NAVIGATION MOBILE
 document.addEventListener("DOMContentLoaded", () => {
-  fetchProducts();
-  fetchUpdateInfo();
+  fetchAllData();
   const toggle = document.getElementById("nav-toggle");
   const nav = document.getElementById("main-nav");
-  if(toggle && nav) toggle.addEventListener("click", () => nav.classList.toggle("open"));
+  if(toggle && nav) {
+      toggle.addEventListener("click", () => {
+          toggle.classList.toggle("open");
+          nav.classList.toggle("open");
+      });
+      // Fermer le menu si on clique sur un lien
+      nav.querySelectorAll('a').forEach(link => {
+          link.addEventListener('click', () => {
+              toggle.classList.remove("open");
+              nav.classList.remove("open");
+          });
+      });
+  }
   window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 });
