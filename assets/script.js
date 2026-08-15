@@ -1,10 +1,10 @@
-/* 
+/*
    ==========================================================================
-   VERSION CONNECTÉE (v11) - assets/script.js
+   VERSION AVEC TÉLÉCHARGEMENT DIRECT (v12) - assets/script.js
    - Grille 1:1 et Vue Détails (Modal)
    - Synchronisation Supabase en temps réel
-   - Téléchargement APK dynamique et Date de mise à jour
-   ========================================================================== 
+   - Téléchargement APK DIRECT (bypass l'interface Drive)
+   ==========================================================================
 */
 
 // 1. CONFIGURATION SUPABASE
@@ -29,6 +29,7 @@ const CATEGORIES = [
 
 let PRODUCTS = [];
 
+// Extrait l'ID Google Drive pour les images
 function driveImg(input) {
     if (!input) return null;
     if (input.startsWith('http')) {
@@ -38,6 +39,17 @@ function driveImg(input) {
         return id ? `https://lh3.googleusercontent.com/d/${id}` : input;
     }
     return `https://lh3.googleusercontent.com/d/${input}`;
+}
+
+// Extrait l'ID Google Drive pour le TÉLÉCHARGEMENT DIRECT
+function getDirectDownloadLink(input) {
+    if (!input) return "#";
+    let id = input;
+    if (input.startsWith('http')) {
+        if (input.includes('/file/d/')) id = input.split('/file/d/')[1].split('/')[0];
+        else if (input.includes('id=')) id = input.split('id=')[1].split('&')[0];
+    }
+    return `https://drive.google.com/uc?export=download&id=${id}`;
 }
 
 const fmtPrice = (p) => p > 0 ? new Intl.NumberFormat('fr-FR').format(p) + " F CFA" : "Sur devis";
@@ -50,9 +62,9 @@ async function fetchProducts() {
         const { data, error } = await supabaseClient.from('catalogue').select('*').order('nom', { ascending: true });
         if (error) throw error;
         PRODUCTS = data.filter(item => item.quantite > 0 || item.afficherSiRupture !== false).map(item => ({
-            id: item.id.toString(), nom: item.nom, 
+            id: item.id.toString(), nom: item.nom,
             cat1: item.site_category || findCategoryKey(item.categorie),
-            cat2: item.site_category2 || null, specs: item.specs_site || "", 
+            cat2: item.site_category2 || null, specs: item.specs_site || "",
             prix: item.prixVente, stockQty: item.quantite, port: item.site_tag || "", img: driveImg(item.url_visuel)
         }));
         if (document.getElementById("product-grid")) initCatalogueLogic();
@@ -60,7 +72,7 @@ async function fetchProducts() {
     } catch (err) { console.error(err); }
 }
 
-// 3. MISE À JOUR APK DYNAMIQUE
+// 3. MISE À JOUR APK DYNAMIQUE (DIRECTE)
 async function fetchUpdateInfo() {
     try {
         const { data, error } = await supabaseClient.from('controle_version').select('*').eq('app_id', 'client').single();
@@ -68,7 +80,9 @@ async function fetchUpdateInfo() {
 
         const btnDl = document.getElementById('btn-download-apk');
         if (btnDl && data.download_url) {
-            btnDl.href = data.download_url;
+            // TRANSFORMATION EN LIEN DIRECT
+            btnDl.href = getDirectDownloadLink(data.download_url);
+
             if (data.updated_at_long > 0) {
                 const date = new Date(data.updated_at_long * 1000);
                 const dateStr = `${date.getDate().toString().padStart(2,'0')}-${(date.getMonth()+1).toString().padStart(2,'0')}-${date.getFullYear()}`;
@@ -80,7 +94,7 @@ async function fetchUpdateInfo() {
     } catch (err) { console.error(err); }
 }
 
-// --- LOGIQUE RENDU (Catégories accueil, Grille, Modal) ---
+// --- LOGIQUE RENDU ---
 
 function renderCategoryStrip(targetId){
   const el = document.getElementById(targetId);
