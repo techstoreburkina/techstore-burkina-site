@@ -60,8 +60,12 @@
     <div class="wrap">
       <div class="cta-band">
         <h2>Tu ne trouves pas ce qu'il te faut ?</h2>
-        <p>Décris ton besoin sur WhatsApp — on te dit honnêtement si on peut le fournir, et sous quel délai.</p>
-        <a class="btn btn-whatsapp" href="https://wa.me/22676963696" target="_blank" rel="noopener">💬 Demander sur WhatsApp</a>
+        <p>Décris ton besoin sur WhatsApp ou télécharge notre application mobile pour un suivi personnalisé.</p>
+        <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+            <a class="btn btn-whatsapp" href="https://wa.me/22676963696" target="_blank" rel="noopener">💬 Demander sur WhatsApp</a>
+            <!-- BOUTON DE TÉLÉCHARGEMENT DYNAMIQUE -->
+            <a href="#" id="btn-download-apk" class="btn btn-outline">⬇️ Télécharger l'App</a>
+        </div>
       </div>
     </div>
   </section>
@@ -102,7 +106,8 @@
 </footer>
 
 <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- SDK SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/script.js"></script>
 </body>
 </html>
